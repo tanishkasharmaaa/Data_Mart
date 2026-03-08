@@ -157,3 +157,52 @@ CREATE INDEX idx_customers_country ON customers(country);
 CREATE INDEX idx_customers_created_at ON customers(created_at);
 
 
+ORDERS TABLE LOOKS LIKE THIS :
+
+CREATE TABLE orders (
+  id SERIAL PRIMARY KEY,
+  customer_id INT REFERENCES customers(id),
+  product_id INT REFERENCES products(id),
+  quantity INT NOT NULL,
+  total_price NUMERIC NOT NULL,
+  status TEXT DEFAULT 'completed',
+  order_date TIMESTAMP DEFAULT NOW()
+);
+
+ORDERS INDEXES :
+
+CREATE INDEX idx_orders_customer ON orders(customer_id);
+CREATE INDEX idx_orders_product ON orders(product_id);
+CREATE INDEX idx_orders_date ON orders(order_date);
+CREATE INDEX idx_orders_status ON orders(status);
+
+SEED FUNCTION FOR ORDERS
+
+CREATE OR REPLACE FUNCTION seed_orders(total INT)
+RETURNS VOID AS $$
+BEGIN
+
+INSERT INTO orders (
+  customer_id,
+  product_id,
+  quantity,
+  total_price,
+  status,
+  order_date
+)
+
+SELECT
+  floor(random()*5000 + 1)::INT,   -- random customer
+  floor(random()*10000 + 1)::INT,  -- random product
+  floor(random()*5 + 1)::INT,      -- quantity 1-5
+  floor(random()*2000 + 50)::NUMERIC, -- price
+  (ARRAY['completed','pending','shipped','cancelled'])[floor(random()*4 + 1)],
+  NOW() - (random()*365 || ' days')::INTERVAL
+
+FROM generate_series(1, total);
+
+END;
+$$ LANGUAGE plpgsql;
+
+
+SELECT seed_orders(50000);
