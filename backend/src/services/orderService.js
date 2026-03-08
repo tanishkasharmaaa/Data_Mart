@@ -74,7 +74,48 @@ const fetchCustomerOrders = async ({
   return result
 }
 
+const fetchAllOrders = async ({ page = 1, limit = 50, sortBy = "order_date", order = "desc" }) => {
+  const start = (page - 1) * limit
+  const end = start + limit - 1
+
+  const { data, error, count } = await supabase
+    .from("orders")
+    .select(`
+      id,
+      customer_id,
+      quantity,
+      total_price,
+      order_date,
+      status,
+      products (
+        id,
+        title,
+        category,
+        price,
+        image_url
+      ),
+      customers (
+        id,
+        name,
+        email
+      )
+    `, { count: "exact" })
+    .order(sortBy, { ascending: order === "asc" })
+    .range(start, end)
+
+  if (error) throw error
+
+  return {
+    orders: data,
+    total: count,
+    page,
+    limit
+  }
+}
+
+
 module.exports = {
   addOrder,
-  fetchCustomerOrders
+  fetchCustomerOrders,
+  fetchAllOrders
 }

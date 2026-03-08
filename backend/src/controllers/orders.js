@@ -1,4 +1,4 @@
-const { addOrder, fetchCustomerOrders } = require("../services/orderService")
+const { addOrder, fetchCustomerOrders,fetchAllOrders } = require("../services/orderService")
 
 // Create a new order
 const createOrder = async (req, res) => {
@@ -48,7 +48,22 @@ const getOrdersByCustomer = async (req, res) => {
   }
 }
 
+const getAllOrders = async (req, res) => {
+  try {
+    const page = Number(req.query.page) || 1
+    const limit = Number(req.query.limit) || 50
+    const sortBy = req.query.sortBy || "order_date"
+    const order = req.query.order || "desc"
+
+    const orders = await fetchAllOrders({ page, limit, sortBy, order })
+    res.json(orders)
+  } catch (error) {
+    res.status(500).json({ error: error.message })
+  }
+}
+
 module.exports = {
   createOrder,
-  getOrdersByCustomer
+  getOrdersByCustomer,
+  getAllOrders
 }
