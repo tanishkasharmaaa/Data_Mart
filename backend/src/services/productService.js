@@ -1,8 +1,7 @@
-const supabase = require("../config/db")
-const cache = require("../utils/cache")
-const buildCacheKey = require("../utils/cacheKey")
+const supabase = require("../config/db");
+const cache = require("../utils/cache");
+const buildCacheKey = require("../utils/cacheKey");
 
-// Existing getProducts function
 const getProducts = async (params) => {
   const {
     page = 1,
@@ -14,62 +13,102 @@ const getProducts = async (params) => {
     minRating,
     inStock,
     sortBy = "created_at",
-    order = "desc"
-  } = params
+    order = "desc",
+  } = params;
 
-  const cacheKey = buildCacheKey("products", params)
-  const cached = cache.get(cacheKey)
+  const cacheKey = buildCacheKey("products", params);
+  const cached = cache.get(cacheKey);
+
   if (cached) {
-    console.log("Serving products from cache")
-    return cached
+    console.log("Serving products from cache");
+    return cached;
   }
 
-  const start = (page - 1) * limit
-  const end = start + limit - 1
+  const start = (page - 1) * limit;
+  const end = start + limit - 1;
 
-  const allowedSort = ["price","rating","created_at","title"]
-  const safeSort = allowedSort.includes(sortBy) ? sortBy : "created_at"
+  const allowedSort = ["price", "rating", "created_at", "title"];
+  const safeSort = allowedSort.includes(sortBy) ? sortBy : "created_at";
+
+  const safeOrder = order === "asc" ? true : false;
 
   let query = supabase
     .from("products")
-    .select("id,title,price,category,image_url,stock,rating", { count: "estimated" })
+    .select(
+      "id,title,price,category,image_url,stock,rating",
+      { count: "estimated" }
+    );
 
-  if (search) query = query.or(`title.ilike.%${search}%,category.ilike.%${search}%`)
-  if (category) query = query.eq("category", category)
-  if (minPrice) query = query.gte("price", minPrice)
-  if (maxPrice) query = query.lte("price", maxPrice)
-  if (minRating) query = query.gte("rating", minRating)
-  if (inStock === "true") query = query.gt("stock", 0)
+  // Filters
+  if (search) {
+    query = query.or(`title.ilike.%${search}%,category.ilike.%${search}%`);
+  }
 
-  query = query.order(safeSort, { ascending: order === "asc" }).range(start, end)
+  if (category) {
+    query = query.eq("category", category);
+  }
 
-  const { data, error, count } = await query
-  if (error) throw error
+  if (minPrice) {
+    query = query.gte("price", minPrice);
+  }
 
-  const result = { products: data, total: count, page, limit }
-  cache.set(cacheKey, result)
-  return result
-}
+  if (maxPrice) {
+    query = query.lte("price", maxPrice);
+  }
 
-// --- New function: getProductById with caching ---
+  if (minRating) {
+    query = query.gte("rating", minRating);
+  }
+
+  if (inStock === true || inStock === "true") {
+    query = query.gt("stock", 0);
+  }
+
+  // Sorting
+  query = query.order(safeSort, { ascending: safeOrder });
+
+  // Pagination
+  query = query.range(start, end);
+
+  const { data, error, count } = await query;
+
+  if (error) throw error;
+
+  const result = {
+    products: data,
+    total: count,
+    page,
+    limit,
+  };
+
+  cache.set(cacheKey, result);
+
+  return result;
+};
+
+// Single product with cache
 const getProductById = async (id) => {
-  const cacheKey = buildCacheKey("product", { id })
-  const cached = cache.get(cacheKey)
+  const cacheKey = buildCacheKey("product", { id });
+  const cached = cache.get(cacheKey);
+
   if (cached) {
-    console.log(`Serving product ${id} from cache`)
-    return cached
+    console.log(`Serving product ${id} from cache`);
+    return cached;
   }
 
   const { data, error } = await supabase
     .from("products")
-    .select("id,title,price,category,image_url,stock,rating,description") // add more fields if needed
+    .select(
+      "id,title,price,category,image_url,stock,rating,description"
+    )
     .eq("id", id)
-    .single()
+    .single();
 
-  if (error) throw error
+  if (error) throw error;
 
-  cache.set(cacheKey, data)
-  return data
-}
+  cache.set(cacheKey, data);
 
-module.exports = { getProducts, getProductById }
+  return data;
+};
+
+module.exports = { getProducts, getProductById };

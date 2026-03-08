@@ -15,6 +15,7 @@ const fetchProducts = async (req, res, next) => {
       order = "desc"
     } = req.query
 
+   
     const result = await getProducts({
       page: Number(page),
       limit: Number(limit),
