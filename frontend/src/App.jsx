@@ -1,9 +1,10 @@
 import React, { Suspense, lazy } from "react"
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom"
 import { Flex,Spinner } from "@chakra-ui/react"
-import Home from "./pages/Home"
+// import Home from "./pages/Home"
 
 // Lazy-load pages
+const Home = lazy(() => import("./pages/Home"))
 const Dashboard = lazy(() => import("./pages/Dashboard"))
 const Products = lazy(() => import("./pages/Products"))
 const Customers = lazy(() => import("./pages/Customers"))

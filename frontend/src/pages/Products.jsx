@@ -8,85 +8,90 @@ import {
   Button,
   Flex,
   Text,
-  Grid
+  Grid,
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
 } from "@chakra-ui/react";
+import { ChevronRightIcon } from "@chakra-ui/icons";
+import debounce from "lodash.debounce";
 import API from "../api/api";
 import ProductCard from "../components/ProductCard";
-import debounce from "lodash.debounce";
-import { Breadcrumb, BreadcrumbItem, BreadcrumbLink } from "@chakra-ui/react";
-import { ChevronRightIcon } from "@chakra-ui/icons";
 
 const Products = () => {
   const [products, setProducts] = useState([]);
   const [page, setPage] = useState(1);
   const [limit] = useState(20);
   const [total, setTotal] = useState(0);
-  const [search, setSearch] = useState("");
-  const [category, setCategory] = useState("");
-  const [minPrice, setMinPrice] = useState("");
-  const [maxPrice, setMaxPrice] = useState("");
-  const [minRating, setMinRating] = useState("");
-  const [inStock, setInStock] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [sortBy, setSortBy] = useState("created_at");
-  const [order, setOrder] = useState("desc");
 
-  const debouncedSearch = useCallback(
+  // Unified filters object
+  const [filters, setFilters] = useState({
+    search: "",
+    category: "",
+    minPrice: "",
+    maxPrice: "",
+    minRating: "",
+    inStock: false,
+    sortBy: "created_at",
+    order: "desc",
+  });
+
+  // Debounced filter updater
+  const updateFiltersDebounced = useCallback(
     // eslint-disable-next-line react-hooks/use-memo
-    debounce((value) => {
-      setSearch(value);
-      setPage(1);
+    debounce((newFilters) => {
+      setFilters((prev) => ({ ...prev, ...newFilters }));
+      setPage(1); 
     }, 1000),
     []
   );
 
-  const fetchProducts = async () => {
-    setLoading(true);
-    try {
-      const params = {
-        page,
-        limit,
-        search,
-        category,
-        minPrice,
-        maxPrice,
-        minRating,
-        inStock,
-        sortBy,
-        order,
-      };
-      const res = await API.get("/products", { params });
-      setProducts(res.data.products);
-      setTotal(res.data.total);
-    } catch (err) {
-      console.error(err);
-    }
-    setLoading(false);
-  };
-
+  // Fetch products from API
   useEffect(() => {
+    const fetchProducts = async () => {
+      setLoading(true);
+      try {
+        const params = { page, limit, ...filters };
+        const res = await API.get("/products", { params });
+        setProducts(res.data.products);
+        setTotal(res.data.total);
+      } catch (err) {
+        console.error(err);
+      }
+      setLoading(false);
+    };
+
     fetchProducts();
-    return () => debouncedSearch.cancel();
-  }, [page, category, minPrice, maxPrice, minRating, inStock, sortBy, order, search]);
+    return () => updateFiltersDebounced.cancel();
+  }, [page, filters]);
 
   const totalPages = Math.ceil(total / limit);
 
   return (
     <Box p={6} bgGradient="linear(to-b, gray.900, gray.800)" minH="100vh">
-     <Breadcrumb
-    spacing="8px"
-    separator={<ChevronRightIcon color="gray.400" />}
-    mb={4}
-  >
-    <BreadcrumbItem>
-      <BreadcrumbLink href="/dashboard" color="gray.400" _hover={{ color: "yellow.400" }}>
-        Dashboard
-      </BreadcrumbLink>
-    </BreadcrumbItem>
-    <BreadcrumbItem isCurrentPage>
-      <BreadcrumbLink color="white" _hover={{ color: "yellow.400" }}>Products</BreadcrumbLink>
-    </BreadcrumbItem>
-  </Breadcrumb>
+      {/* Breadcrumb */}
+      <Breadcrumb
+        spacing="8px"
+        separator={<ChevronRightIcon color="gray.400" />}
+        mb={4}
+      >
+        <BreadcrumbItem>
+          <BreadcrumbLink
+            href="/dashboard"
+            color="gray.400"
+            _hover={{ color: "yellow.400" }}
+          >
+            Dashboard
+          </BreadcrumbLink>
+        </BreadcrumbItem>
+        <BreadcrumbItem isCurrentPage>
+          <BreadcrumbLink color="white" _hover={{ color: "yellow.400" }}>
+            Products
+          </BreadcrumbLink>
+        </BreadcrumbItem>
+      </Breadcrumb>
+
       {/* Filters */}
       <Box
         mb={6}
@@ -101,85 +106,115 @@ const Products = () => {
           spacing={4}
           alignItems="center"
         >
+          {/* Search */}
           <Input
             placeholder="Search products..."
-            onChange={(e) => debouncedSearch(e.target.value)}
             bg="rgba(255,255,255,0.1)"
             color="white"
             _placeholder={{ color: "gray.300" }}
+            onChange={(e) =>
+              updateFiltersDebounced({ search: e.target.value })
+            }
           />
+
+          {/* Category */}
           <Select
             placeholder="Category"
-            onChange={(e) => { setCategory(e.target.value); setPage(1); }}
-             color="black"
-          bg="white"
-          _hover={{ bg: "gray.100" }}
-          _focus={{ borderColor: "yellow.400" }}
+            bg="white"
+            color="black"
+            _hover={{ bg: "gray.100" }}
+            _focus={{ borderColor: "yellow.400" }}
+            onChange={(e) =>
+              updateFiltersDebounced({ category: e.target.value })
+            }
           >
             <option value="Electronics">Electronics</option>
             <option value="Fashion">Fashion</option>
             <option value="Footwear">Footwear</option>
             <option value="Accessories">Accessories</option>
             <option value="Home Appliances">Home Appliances</option>
-             <option value="Fitness">Fitness</option>
-              <option value="Computers">Computers</option>
-               
+            <option value="Fitness">Fitness</option>
+            <option value="Computers">Computers</option>
           </Select>
+
+          {/* Min Price */}
           <Input
             placeholder="Min Price"
             type="number"
-            onChange={(e) => setMinPrice(e.target.value)}
             bg="rgba(255,255,255,0.1)"
             color="white"
+            onChange={(e) =>
+              updateFiltersDebounced({ minPrice: e.target.value })
+            }
           />
+
+          {/* Max Price */}
           <Input
             placeholder="Max Price"
             type="number"
-            onChange={(e) => setMaxPrice(e.target.value)}
             bg="rgba(255,255,255,0.1)"
             color="white"
+            onChange={(e) =>
+              updateFiltersDebounced({ maxPrice: e.target.value })
+            }
           />
+
+          {/* Min Rating */}
           <Select
             placeholder="Min Rating"
-            onChange={(e) => setMinRating(e.target.value)}
-             color="black"
-          bg="white"
-          _hover={{ bg: "gray.100" }}
-          _focus={{ borderColor: "yellow.400" }}
+            bg="white"
+            color="black"
+            _hover={{ bg: "gray.100" }}
+            _focus={{ borderColor: "yellow.400" }}
+            onChange={(e) =>
+              updateFiltersDebounced({ minRating: e.target.value })
+            }
           >
             <option value="1">1+</option>
             <option value="2">2+</option>
             <option value="3">3+</option>
             <option value="4">4+</option>
           </Select>
+
+          {/* In Stock */}
           <Select
-            onChange={(e) => setInStock(e.target.value === "true")}
-             color="black"
-          bg="white"
-          _hover={{ bg: "gray.100" }}
-          _focus={{ borderColor: "yellow.400" }}
+            bg="white"
+            color="black"
+            _hover={{ bg: "gray.100" }}
+            _focus={{ borderColor: "yellow.400" }}
+            onChange={(e) =>
+              updateFiltersDebounced({ inStock: e.target.value === "true" })
+            }
           >
             <option value="true">In Stock</option>
             <option value="false">All</option>
           </Select>
+
+          {/* Sort By */}
           <Select
-            onChange={(e) => setSortBy(e.target.value)}
-             color="black"
-          bg="white"
-          _hover={{ bg: "gray.100" }}
-          _focus={{ borderColor: "yellow.400" }}
+            bg="white"
+            color="black"
+            _hover={{ bg: "gray.100" }}
+            _focus={{ borderColor: "yellow.400" }}
+            onChange={(e) =>
+              updateFiltersDebounced({ sortBy: e.target.value })
+            }
           >
             <option value="created_at">Newest</option>
             <option value="price">Price</option>
             <option value="rating">Rating</option>
             <option value="title">Title</option>
           </Select>
+
+          {/* Order */}
           <Select
-            onChange={(e) => setOrder(e.target.value)}
-             color="black"
-          bg="white"
-          _hover={{ bg: "gray.100" }}
-          _focus={{ borderColor: "yellow.400" }}
+            bg="white"
+            color="black"
+            _hover={{ bg: "gray.100" }}
+            _focus={{ borderColor: "yellow.400" }}
+            onChange={(e) =>
+              updateFiltersDebounced({ order: e.target.value })
+            }
           >
             <option value="desc">Desc</option>
             <option value="asc">Asc</option>
@@ -187,7 +222,7 @@ const Products = () => {
         </SimpleGrid>
       </Box>
 
-      {/* Products */}
+      {/* Products Grid */}
       {loading ? (
         <Flex justify="center" mt={10}>
           <Spinner size="xl" color="yellow.400" />
