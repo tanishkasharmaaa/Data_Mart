@@ -1,6 +1,7 @@
 import React, { Suspense, lazy } from "react"
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom"
 import { Flex,Spinner } from "@chakra-ui/react"
+import { useEffect } from "react"
 // import Home from "./pages/Home"
 
 // Lazy-load pages
@@ -13,6 +14,9 @@ const ProductDetail = lazy(() => import("./pages/ProductDetail"))
 const CustomerDetail = lazy(() => import("./pages/CustomerDetail"))
 
 function App() {
+    useEffect(() => {
+    fetch(import.meta.env.VITE_BACKEND_URL + "/health")
+  }, [])
   return (
     <Router>
       <Suspense fallback={ <Flex justify="center" align="center" height="80vh">
