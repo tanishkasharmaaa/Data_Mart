@@ -9,6 +9,9 @@ The application demonstrates **scalable architecture and performance optimizatio
 
 ---
 
+### 🚀 Live Demo
+🔗 https://data-mart-two.vercel.app/
+
 # 🏗 Application Architecture
 
 The system follows a **3-tier architecture**.
