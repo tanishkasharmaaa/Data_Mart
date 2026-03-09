@@ -1,208 +1,508 @@
-PRODUCTS TABLE LOOKS LIKE THIS : - 
 
-CREATE TABLE products (
-  id SERIAL PRIMARY KEY,
-  title TEXT NOT NULL,
-  description TEXT NOT NULL,
-  category TEXT NOT NULL,
-  price NUMERIC(10,2) NOT NULL,
-  stock INTEGER DEFAULT 0,
-  rating NUMERIC(2,1) DEFAULT 0,
-  image_url TEXT,
-  created_at TIMESTAMP DEFAULT NOW(),
-  updated_at TIMESTAMP DEFAULT NOW()
-);
+---
 
-INDEXING LOOKS LIKE THIS 
+# 🚀 Scalable E-Commerce Dashboard
 
-CREATE INDEX idx_products_title ON products(title);
-CREATE INDEX idx_products_category ON products(category);
-CREATE INDEX idx_products_price ON products(price);
-CREATE INDEX idx_products_rating ON products(rating);
+A **full-stack high-performance product management and analytics application** built to handle **large datasets efficiently** with optimized frontend rendering, backend query performance, caching, and pagination.
 
-DATA SEEDING FUNCTION : 
+The application demonstrates **scalable architecture and performance optimization techniques** across the entire stack.
 
-CREATE OR REPLACE FUNCTION seed_products(total INTEGER)
-RETURNS void
-LANGUAGE plpgsql
-AS $$
-BEGIN
-  INSERT INTO products (title, description, category, price, stock, rating, image_url)
-  SELECT
-    product_names[ceil(random()*array_length(product_names,1))],
-    'High quality product designed for performance and durability.',
-    categories[ceil(random()*array_length(categories,1))],
-    round((random()*70000 + 500)::numeric,2),
-    floor(random()*300),
-    round((random()*5)::numeric,1),
-    images[ceil(random()*array_length(images,1))]
-  FROM generate_series(1, total),
-  (
-    SELECT
-      ARRAY[
-        'Apple AirPods Pro',
-        'Sony WH-1000XM5 Headphones',
-        'Nike Air Zoom Pegasus Running Shoes',
-        'Adidas Ultraboost Sneakers',
-        'Samsung Galaxy Buds 2',
-        'Logitech MX Master 3 Mouse',
-        'Dell XPS 13 Laptop',
-        'HP Pavilion 15 Laptop',
-        'Canon EOS M50 Camera',
-        'Apple Watch Series 9',
-        'JBL Flip 6 Bluetooth Speaker',
-        'RayBan Aviator Sunglasses',
-        'Levis Slim Fit Jeans',
-        'Puma Sports T-Shirt',
-        'Philips Air Fryer',
-        'KitchenAid Stand Mixer',
-        'Asus ROG Gaming Monitor',
-        'Lenovo ThinkPad Mechanical Keyboard',
-        'Boat Rockerz 550 Headphones',
-        'Mi Smart Band 8'
-      ] AS product_names,
+---
 
-      ARRAY[
-        'Electronics',
-        'Fashion',
-        'Footwear',
-        'Accessories',
-        'Home Appliances',
-        'Fitness',
-        'Computers'
-      ] AS categories,
+# 🏗 Application Architecture
 
-      ARRAY[
-        'https://images.unsplash.com/photo-1585386959984-a4155224a1ad',
-        'https://images.unsplash.com/photo-1517336714731-489689fd1ca8',
-        'https://images.unsplash.com/photo-1600185365483-26d7a4cc7519',
-        'https://images.unsplash.com/photo-1593032465171-8c1c88c3f4e0',
-        'https://images.unsplash.com/photo-1518444028785-8fbcd101ebb9',
-        'https://images.unsplash.com/photo-1523275335684-37898b6baf30',
-        'https://images.unsplash.com/photo-1505740420928-5e560c06d30e',
-        'https://images.unsplash.com/photo-1580894894513-541e068a3e2b',
-        'https://images.unsplash.com/photo-1572635196237-14b3f281503f',
-        'https://images.unsplash.com/photo-1598327105666-5b89351aff97'
-      ] AS images
-  ) data;
-END;
-$$;
+The system follows a **3-tier architecture**.
 
-SELECT seed_products(10000);
+```
+Frontend (React + Vite + Chakra UI)
+        │
+        │ REST API (Axios)
+        ▼
+Backend (Node.js + Express)
+        │
+        │ Supabase Client
+        ▼
+Database (PostgreSQL via Supabase)
+```
 
-CUSTOMERS TABLE LOOKS LIKE THIS : -
+### Frontend
 
+* React (Vite)
+* Chakra UI
+* Axios for API communication
 
-CREATE TABLE customers (
-  id SERIAL PRIMARY KEY,
-  name TEXT NOT NULL,
-  email TEXT UNIQUE,
-  city TEXT,
-  country TEXT,
-  created_at TIMESTAMP DEFAULT NOW()
-);
+### Backend
 
-SEED FUNCTION FOR CUSTOMERS :
+* Node.js
+* Express.js
+* Supabase client
+* Node Cache for caching
+* Retry logic for network resilience
 
-CREATE OR REPLACE FUNCTION seed_customers(total INT)
-RETURNS VOID AS $$
-DECLARE
-  first_names TEXT[] := ARRAY[
-    'John','Emily','Michael','Sarah','David','Emma','Daniel','Olivia',
-    'James','Sophia','Robert','Isabella','William','Mia','Joseph','Charlotte'
-  ];
+### Database
 
-  last_names TEXT[] := ARRAY[
-    'Smith','Johnson','Brown','Taylor','Anderson','Thomas',
-    'Jackson','White','Harris','Martin','Thompson','Garcia'
-  ];
+* PostgreSQL (Supabase)
+* Indexed queries
+* Filtered queries with pagination
 
-  cities TEXT[] := ARRAY[
-    'New York','London','Toronto','Berlin','Paris',
-    'Sydney','Mumbai','Tokyo','Dubai','Singapore'
-  ];
+---
 
-  countries TEXT[] := ARRAY[
-    'USA','UK','Canada','Germany','France',
-    'Australia','India','Japan','UAE','Singapore'
-  ];
-BEGIN
-  INSERT INTO customers (name, email, city, country)
-  SELECT
-    first_names[floor(random()*array_length(first_names,1) + 1)] || ' ' ||
-    last_names[floor(random()*array_length(last_names,1) + 1)],
+# ⚡ Frontend Performance Optimizations
 
-    'user' || gs || '@example.com',
+The frontend is optimized to **efficiently render large datasets and minimize network load**.
 
-    cities[floor(random()*array_length(cities,1) + 1)],
+### 1️⃣ Pagination
 
-    countries[floor(random()*array_length(countries,1) + 1)]
+Instead of loading thousands of records at once, the frontend fetches **small chunks of data**.
 
-  FROM generate_series(1, total) AS gs;
-END;
-$$ LANGUAGE plpgsql;
+Example:
 
-SELECT seed_customers(5000);
+```
+GET /products?page=1&limit=20
+```
 
-INDEXES FOR CUSTOMERS TABLE 
+Benefits:
 
-CREATE INDEX idx_customers_name ON customers(name);
+* Faster UI rendering
+* Smaller network responses
+* Reduced backend load
 
-CREATE INDEX idx_customers_email ON customers(email);
+---
 
-CREATE INDEX idx_customers_city ON customers(city);
+### 2️⃣ Debounced Search
 
-CREATE INDEX idx_customers_country ON customers(country);
+User search input is **debounced** to prevent excessive API calls.
 
-CREATE INDEX idx_customers_created_at ON customers(created_at);
+Example behavior:
 
+```
+User types: "Laptop"
 
-ORDERS TABLE LOOKS LIKE THIS :
+Without debounce:
+5 API calls
 
-CREATE TABLE orders (
-  id SERIAL PRIMARY KEY,
-  customer_id INT REFERENCES customers(id),
-  product_id INT REFERENCES products(id),
-  quantity INT NOT NULL,
-  total_price NUMERIC NOT NULL,
-  status TEXT DEFAULT 'completed',
-  order_date TIMESTAMP DEFAULT NOW()
-);
+With debounce:
+1 API call
+```
 
-ORDERS INDEXES :
+This significantly reduces unnecessary requests.
 
-CREATE INDEX idx_orders_customer ON orders(customer_id);
-CREATE INDEX idx_orders_product ON orders(product_id);
-CREATE INDEX idx_orders_date ON orders(order_date);
-CREATE INDEX idx_orders_status ON orders(status);
+---
 
-SEED FUNCTION FOR ORDERS
+### 3️⃣ Optimized Rendering
 
-CREATE OR REPLACE FUNCTION seed_orders(total INT)
-RETURNS VOID AS $$
-BEGIN
+The product grid renders only **visible items**, preventing unnecessary re-renders.
 
-INSERT INTO orders (
-  customer_id,
-  product_id,
-  quantity,
-  total_price,
-  status,
-  order_date
-)
+Techniques used:
 
-SELECT
-  floor(random()*5000 + 1)::INT,   -- random customer
-  floor(random()*10000 + 1)::INT,  -- random product
-  floor(random()*5 + 1)::INT,      -- quantity 1-5
-  floor(random()*2000 + 50)::NUMERIC, -- price
-  (ARRAY['completed','pending','shipped','cancelled'])[floor(random()*4 + 1)],
-  NOW() - (random()*365 || ' days')::INTERVAL
+* Efficient component structure
+* Proper state management
+* Controlled API calls
 
-FROM generate_series(1, total);
+---
 
-END;
-$$ LANGUAGE plpgsql;
+### 4️⃣ Lazy Image Loading
 
+Product images load **only when needed**, improving initial page load speed.
 
-SELECT seed_orders(50000);
+Benefits:
+
+* Faster page load
+* Reduced bandwidth usage
+
+---
+
+# ⚙️ Backend API Design Decisions
+
+The backend is designed for **high scalability and reliability**.
+
+Key principles:
+
+### ✔ Modular Service Architecture
+
+```
+controllers/
+services/
+utils/
+config/
+```
+
+Services handle business logic while controllers manage API routes.
+
+Example:
+
+```
+routes → controllers → services → database
+```
+
+---
+
+### ✔ Retry Mechanism
+
+Network failures such as:
+
+```
+ECONNRESET
+fetch failed
+ENOTFOUND
+```
+
+are handled using **automatic retry logic**.
+
+Example:
+
+```
+Try 1 → Fail
+Try 2 → Retry
+Try 3 → Retry
+```
+
+This ensures **API reliability in unstable environments**.
+
+---
+
+### ✔ Server-Side Pagination
+
+All list endpoints use **pagination**.
+
+Example:
+
+```
+GET /products?page=1&limit=20
+```
+
+Benefits:
+
+* Reduced database load
+* Faster API responses
+* Efficient handling of large datasets
+
+---
+
+### ✔ Caching Layer
+
+The backend uses **NodeCache** to reduce database queries.
+
+Example flow:
+
+```
+Request → Cache Check → Database (if miss)
+```
+
+If cached:
+
+```
+Serving products from cache
+```
+
+Cache invalidation occurs when data changes (e.g., new order creation).
+
+---
+
+# 🗄 Database and Query Strategy
+
+The database uses **Supabase PostgreSQL** with optimized queries.
+
+### Indexed Columns
+
+Important fields used in filtering and sorting:
+
+* `created_at`
+* `price`
+* `rating`
+* `category`
+
+These columns are indexed to improve query performance.
+
+---
+
+### Selective Column Fetching
+
+Instead of fetching all fields:
+
+```
+SELECT *
+```
+
+the API fetches only required columns:
+
+```
+id,title,price,category,image_url,stock,rating
+```
+
+Benefits:
+
+* Smaller payloads
+* Faster queries
+
+---
+
+### Relationship Queries
+
+Supabase joins related tables efficiently.
+
+Example:
+
+```
+orders
+  → products
+  → customers
+```
+
+This enables fetching related data in **a single query**.
+
+---
+
+# 📡 API Endpoints
+
+### Products
+
+```
+GET /products
+```
+
+Query parameters:
+
+```
+page
+limit
+search
+category
+minPrice
+maxPrice
+minRating
+inStock
+sortBy
+order
+```
+
+---
+
+### Single Product
+
+```
+GET /products/:id
+```
+
+---
+
+### Customers
+
+```
+GET /customers
+GET /customers/:id
+```
+
+---
+
+### Orders
+
+```
+POST /orders
+GET /orders/customer/:id
+GET /orders/admin
+```
+
+---
+
+# 📥 Sample API Request
+
+### Fetch Products
+
+```
+GET /products?page=1&limit=20&category=Electronics&sortBy=price&order=asc
+```
+
+---
+
+# 📤 Sample API Response
+
+```json
+{
+  "products": [
+    {
+      "id": 12,
+      "title": "Wireless Headphones",
+      "description":"High wireless headphone",
+      "price": 199.99,
+      "category": "Electronics",
+      "rating": 4.5,
+      "stock": 32,
+      "image_url": "https://..."
+    }
+  ],
+  "total": 1200,
+  "page": 1,
+  "limit": 20
+}
+```
+
+---
+
+# 📦 Key Features
+
+✔ Product catalog with filtering and search
+✔ Customer management
+✔ Order tracking system
+✔ Pagination for large datasets
+✔ Backend caching
+✔ Retry logic for network failures
+✔ Optimized database queries
+
+---
+
+# 🔧 Tech Stack
+
+Frontend
+
+* React
+* Vite
+* Chakra UI
+* Axios
+
+Backend
+
+* Node.js
+* Express
+
+Database
+
+* Supabase (PostgreSQL)
+
+Tools
+
+* Node Cache
+* GitHub
+* Vercel / Render
+
+---
+
+# ⚖️ Trade-Offs Made
+
+### 1️⃣ NodeCache instead of Redis
+
+NodeCache was used for simplicity in a single-server environment.
+
+Trade-off:
+
+* Faster development
+* Not distributed across multiple servers
+
+---
+
+### 2️⃣ Pagination instead of Infinite Scroll
+
+Pagination was chosen to maintain **clear navigation and predictable API behavior**.
+
+Trade-off:
+
+* Simpler backend queries
+* Slightly less seamless UX compared to infinite scrolling
+
+---
+
+### 3️⃣ Supabase Instead of Self-Hosted PostgreSQL
+
+Supabase provides:
+
+* Managed database
+* Authentication
+* API layer
+
+Trade-off:
+
+* Slight vendor dependency
+* Faster development time
+
+---
+
+# 📊 Performance Strategies Implemented
+
+| Optimization       | Purpose                 |
+| ------------------ | ----------------------- |
+| Pagination         | Handle large datasets   |
+| Caching            | Reduce database queries |
+| Retry logic        | Improve reliability     |
+| Selective queries  | Reduce payload size     |
+| Debounced search   | Reduce API calls        |
+| Lazy image loading | Improve page load       |
+
+---
+
+# 🎥 Demo Video
+
+A **5–7 minute demo video** is included showing:
+
+* Application walkthrough
+* Filtering and searching
+* Pagination
+* Performance optimizations
+* Backend API behavior
+
+---
+
+# 📂 Repository Structure
+
+```
+backend/
+ src
+  ├── controllers
+  ├── services
+  ├── routes
+  ├── utils
+  └── config
+
+frontend/
+  src
+   ├── components
+   ├── pages
+   └── api
+```
+
+---
+
+# ▶️ Running the Project
+
+### Backend
+
+```
+npm install
+npm run dev
+```
+
+### Frontend
+
+```
+npm install
+npm run dev
+```
+
+---
+
+# 🌐 Deployment
+
+Frontend deployed on:
+
+```
+Vercel
+```
+
+Backend deployed on:
+
+```
+Render
+```
+
+Database hosted on:
+
+```
+Supabase
+```
+
+---
+
+# 📜 License
+
+MIT License.
+
+---
