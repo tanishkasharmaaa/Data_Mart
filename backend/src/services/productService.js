@@ -1,6 +1,7 @@
 const supabase = require("../config/db");
 const cache = require("../utils/cache");
 const buildCacheKey = require("../utils/cacheKey");
+const retry = require("../utils/retry");
 
 const getProducts = async (params) => {
   const {
@@ -30,7 +31,7 @@ const getProducts = async (params) => {
   const allowedSort = ["price", "rating", "created_at", "title"];
   const safeSort = allowedSort.includes(sortBy) ? sortBy : "created_at";
 
-  const safeOrder = order === "asc" ? true : false;
+  const safeOrder = order === "asc";
 
   let query = supabase
     .from("products")
@@ -70,7 +71,8 @@ const getProducts = async (params) => {
   // Pagination
   query = query.range(start, end);
 
-  const { data, error, count } = await query;
+  // ✅ Retry logic added here
+  const { data, error, count } = await retry(() => query);
 
   if (error) throw error;
 
@@ -96,13 +98,16 @@ const getProductById = async (id) => {
     return cached;
   }
 
-  const { data, error } = await supabase
-    .from("products")
-    .select(
-      "id,title,price,category,image_url,stock,rating,description"
-    )
-    .eq("id", id)
-    .single();
+  // ✅ Retry logic added here
+  const { data, error } = await retry(() =>
+    supabase
+      .from("products")
+      .select(
+        "id,title,price,category,image_url,stock,rating,description"
+      )
+      .eq("id", id)
+      .single()
+  );
 
   if (error) throw error;
 

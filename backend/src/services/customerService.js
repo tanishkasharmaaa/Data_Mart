@@ -1,6 +1,8 @@
 const supabase = require("../config/db")
 const cache = require("../utils/cache")
+const retry = require("../utils/retry")
 
+// ---------------- FETCH CUSTOMERS ----------------
 const fetchCustomers = async ({
   page = 1,
   limit = 20,
@@ -24,10 +26,7 @@ const fetchCustomers = async ({
   const end = start + limit - 1
 
   const allowedSort = ["name","city","country","created_at"]
-
-  if (!allowedSort.includes(sortBy)) {
-    sortBy = "created_at"
-  }
+  const safeSort = allowedSort.includes(sortBy) ? sortBy : "created_at"
 
   let query = supabase
     .from("customers")
@@ -48,12 +47,13 @@ const fetchCustomers = async ({
   }
 
   // sorting
-  query = query.order(sortBy, { ascending: order === "asc" })
+  query = query.order(safeSort, { ascending: order === "asc" })
 
   // pagination
   query = query.range(start, end)
 
-  const { data, error, count } = await query
+  // retry wrapper
+  const { data, error, count } = await retry(() => query)
 
   if (error) throw error
 
@@ -69,6 +69,8 @@ const fetchCustomers = async ({
   return result
 }
 
+
+// ---------------- FETCH CUSTOMER BY ID ----------------
 const fetchCustomerById = async (id) => {
 
   const cacheKey = `customer:${id}`
@@ -80,11 +82,13 @@ const fetchCustomerById = async (id) => {
     return cached
   }
 
-  const { data, error } = await supabase
-    .from("customers")
-    .select("*")
-    .eq("id", id)
-    .single()
+  const { data, error } = await retry(() =>
+    supabase
+      .from("customers")
+      .select("*")
+      .eq("id", id)
+      .single()
+  )
 
   if (error) throw error
 
@@ -92,6 +96,7 @@ const fetchCustomerById = async (id) => {
 
   return data
 }
+
 
 module.exports = {
   fetchCustomers,

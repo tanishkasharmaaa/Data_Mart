@@ -1,5 +1,6 @@
 const supabase = require("../config/db")
 const cache = require("../utils/cache")
+const retry = require("../utils/retry")
 
 const addOrder = async ({ customer_id, product_id, quantity, total_price }) => {
 
@@ -74,45 +75,67 @@ const fetchCustomerOrders = async ({
   return result
 }
 
-const fetchAllOrders = async ({ page = 1, limit = 50, sortBy = "order_date", order = "desc" }) => {
+const fetchAllOrders = async ({
+  page = 1,
+  limit = 50,
+  sortBy = "order_date",
+  order = "desc"
+}) => {
+
+  const cacheKey = `allOrders:${page}:${limit}:${sortBy}:${order}`
+  const cached = cache.get(cacheKey)
+
+  if (cached) {
+    console.log("Serving all orders from cache")
+    return cached
+  }
+
   const start = (page - 1) * limit
   const end = start + limit - 1
 
-  const { data, error, count } = await supabase
-    .from("orders")
-    .select(`
-      id,
-      customer_id,
-      quantity,
-      total_price,
-      order_date,
-      status,
-      products (
+  const allowedSort = ["order_date", "total_price", "status"]
+  const safeSort = allowedSort.includes(sortBy) ? sortBy : "order_date"
+
+  const { data, error, count } = await retry(() =>
+    supabase
+      .from("orders")
+      .select(`
         id,
-        title,
-        category,
-        price,
-        image_url
-      ),
-      customers (
-        id,
-        name,
-        email
-      )
-    `, { count: "exact" })
-    .order(sortBy, { ascending: order === "asc" })
-    .range(start, end)
+        customer_id,
+        quantity,
+        total_price,
+        order_date,
+        status,
+        products (
+          id,
+          title,
+          category,
+          price,
+          image_url
+        ),
+        customers (
+          id,
+          name,
+          email
+        )
+      `, { count: "exact" })
+      .order(safeSort, { ascending: order === "asc" })
+      .range(start, end)
+  )
 
   if (error) throw error
 
-  return {
+  const result = {
     orders: data,
     total: count,
-    page,
-    limit
+    page: Number(page),
+    limit: Number(limit)
   }
-}
 
+  cache.set(cacheKey, result)
+
+  return result
+}
 
 module.exports = {
   addOrder,

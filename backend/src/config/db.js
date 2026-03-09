@@ -1,9 +1,13 @@
-const {createClient} = require("@supabase/supabase-js")
-require("dotenv").config()
+const { createClient } = require("@supabase/supabase-js");
+require("dotenv").config();
 
-const supabaseUrl = process.env.SUPABASE_URL
-const supabaseKey = process.env.SUPABASE_SERVICE_KEY
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_SERVICE_KEY;
 
-const supabase = createClient(supabaseUrl, supabaseKey)
+if (!supabaseUrl || !supabaseKey) {
+  throw new Error("Supabase environment variables are missing");
+}
 
-module.exports = supabase
+const supabase = createClient(supabaseUrl, supabaseKey);
+
+module.exports = supabase;
