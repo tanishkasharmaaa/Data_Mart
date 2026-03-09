@@ -42,9 +42,9 @@ const Products = () => {
     // eslint-disable-next-line react-hooks/use-memo
     debounce((newFilters) => {
       setFilters((prev) => ({ ...prev, ...newFilters }));
-      setPage(1); 
+      setPage(1);
     }, 1000),
-    []
+    [],
   );
 
   // Fetch products from API
@@ -67,6 +67,11 @@ const Products = () => {
   }, [page, filters]);
 
   const totalPages = Math.ceil(total / limit);
+
+  const optionStyle = {
+    color: "black",
+    background: "white",
+  };
 
   return (
     <Box p={6} bgGradient="linear(to-b, gray.900, gray.800)" minH="100vh">
@@ -112,9 +117,7 @@ const Products = () => {
             bg="rgba(255,255,255,0.1)"
             color="white"
             _placeholder={{ color: "gray.300" }}
-            onChange={(e) =>
-              updateFiltersDebounced({ search: e.target.value })
-            }
+            onChange={(e) => updateFiltersDebounced({ search: e.target.value })}
           />
 
           {/* Category */}
@@ -123,18 +126,32 @@ const Products = () => {
             bg="white"
             color="black"
             _hover={{ bg: "gray.100" }}
-            _focus={{ borderColor: "yellow.400" }}
+            _focus={{ borderColor: "yellow.400", bg: "white", color: "black" }}
             onChange={(e) =>
               updateFiltersDebounced({ category: e.target.value })
             }
           >
-            <option value="Electronics">Electronics</option>
-            <option value="Fashion">Fashion</option>
-            <option value="Footwear">Footwear</option>
-            <option value="Accessories">Accessories</option>
-            <option value="Home Appliances">Home Appliances</option>
-            <option value="Fitness">Fitness</option>
-            <option value="Computers">Computers</option>
+            <option style={optionStyle} value="Electronics">
+              Electronics
+            </option>
+            <option style={optionStyle} value="Fashion">
+              Fashion
+            </option>
+            <option style={optionStyle} value="Footwear">
+              Footwear
+            </option>
+            <option style={optionStyle} value="Accessories">
+              Accessories
+            </option>
+            <option style={optionStyle} value="Home Appliances">
+              Home Appliances
+            </option>
+            <option style={optionStyle} value="Fitness">
+              Fitness
+            </option>
+            <option style={optionStyle} value="Computers">
+              Computers
+            </option>
           </Select>
 
           {/* Min Price */}
@@ -165,15 +182,15 @@ const Products = () => {
             bg="white"
             color="black"
             _hover={{ bg: "gray.100" }}
-            _focus={{ borderColor: "yellow.400" }}
+            _focus={{ borderColor: "yellow.400", bg: "white", color: "black" }}
             onChange={(e) =>
               updateFiltersDebounced({ minRating: e.target.value })
             }
           >
-            <option value="1">1+</option>
-            <option value="2">2+</option>
-            <option value="3">3+</option>
-            <option value="4">4+</option>
+            <option style={optionStyle} value="1">1+</option>
+            <option style={optionStyle} value="2">2+</option>
+            <option style={optionStyle} value="3">3+</option>
+            <option style={optionStyle} value="4">4+</option>
           </Select>
 
           {/* In Stock */}
@@ -181,7 +198,7 @@ const Products = () => {
             bg="white"
             color="black"
             _hover={{ bg: "gray.100" }}
-            _focus={{ borderColor: "yellow.400" }}
+            _focus={{ borderColor: "yellow.400", bg: "white", color: "black" }}
             onChange={(e) =>
               updateFiltersDebounced({ inStock: e.target.value === "true" })
             }
@@ -195,29 +212,25 @@ const Products = () => {
             bg="white"
             color="black"
             _hover={{ bg: "gray.100" }}
-            _focus={{ borderColor: "yellow.400" }}
-            onChange={(e) =>
-              updateFiltersDebounced({ sortBy: e.target.value })
-            }
+            _focus={{ borderColor: "yellow.400", bg: "white", color: "black" }}
+            onChange={(e) => updateFiltersDebounced({ sortBy: e.target.value })}
           >
-            <option value="created_at">Newest</option>
-            <option value="price">Price</option>
-            <option value="rating">Rating</option>
-            <option value="title">Title</option>
+            <option style={optionStyle} value="created_at">Newest</option>
+            <option style={optionStyle} value="price">Price</option>
+            <option style={optionStyle} value="rating">Rating</option>
+            <option style={optionStyle} value="title">Title</option>
           </Select>
 
           {/* Order */}
           <Select
-            bg="white"
+             bg="white"
             color="black"
             _hover={{ bg: "gray.100" }}
-            _focus={{ borderColor: "yellow.400" }}
-            onChange={(e) =>
-              updateFiltersDebounced({ order: e.target.value })
-            }
+            _focus={{ borderColor: "yellow.400", bg: "white", color: "black" }}
+            onChange={(e) => updateFiltersDebounced({ order: e.target.value })}
           >
-            <option value="desc">Desc</option>
-            <option value="asc">Asc</option>
+            <option style={optionStyle}  value="desc">Desc</option>
+            <option style={optionStyle} value="asc">Asc</option>
           </Select>
         </SimpleGrid>
       </Box>

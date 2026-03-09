@@ -84,6 +84,10 @@ const Customers = () => {
   }, [page, selectedCity, selectedCountry, search]);
 
   const totalPages = Math.ceil(total / limit);
+  const optionStyle = {
+    color: "black",
+    background: "white",
+  };
 
   return (
     <Box p={6} bgGradient="linear(to-b, gray.900, gray.800)" minH="100vh">
@@ -140,18 +144,18 @@ const Customers = () => {
         <Select
           placeholder="Select City"
           bg="white"
+          color="black"
+          _hover={{ bg: "gray.100" }}
+          _focus={{ borderColor: "yellow.400", bg: "white", color: "black" }}
           width={{ base: "100%", md: "150px" }}
           value={selectedCity}
           onChange={(e) => {
             setSelectedCity(e.target.value);
             setPage(1);
           }}
-          color="black"
-          _hover={{ bg: "gray.100" }}
-          _focus={{ borderColor: "yellow.400" }}
         >
           {cities.map((city) => (
-            <option key={city} value={city}>
+            <option style={optionStyle} key={city} value={city}>
               {city}
             </option>
           ))}
@@ -160,10 +164,10 @@ const Customers = () => {
         {/* Country Select */}
         <Select
           placeholder="Select Country"
-          color="black"
           bg="white"
+          color="black"
           _hover={{ bg: "gray.100" }}
-          _focus={{ borderColor: "yellow.400" }}
+          _focus={{ borderColor: "yellow.400", bg: "white", color: "black" }}
           width={{ base: "100%", md: "150px" }}
           value={selectedCountry}
           onChange={(e) => {
@@ -172,7 +176,7 @@ const Customers = () => {
           }}
         >
           {countries.map((country) => (
-            <option key={country} value={country}>
+            <option style={optionStyle} key={country} value={country}>
               {country}
             </option>
           ))}
