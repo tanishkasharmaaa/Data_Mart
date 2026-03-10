@@ -13,7 +13,7 @@ The application demonstrates **scalable architecture and performance optimizatio
 🔗 https://data-mart-two.vercel.app/
 
 ### 🚀 Video Link
-🔗 [https://data-mart-two.vercel.app/](https://drive.google.com/file/d/1vSAUef0LEqh2qpqgcaB_u-ToDs1NSQBg/view?usp=sharing)
+🔗 [Checkout](https://drive.google.com/file/d/1vSAUef0LEqh2qpqgcaB_u-ToDs1NSQBg/view?usp=sharing)
 
 # 🏗 Application Architecture
 
